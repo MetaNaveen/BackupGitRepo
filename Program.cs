@@ -128,7 +128,7 @@ class Program {
          backupFolderName = $"Backup_{dateSuffix}_{i++}";
          defaultBackupDir = Path.Combine (backupDir, backupFolderName);
       }
-      while (isBackupDirArg || Directory.Exists (defaultBackupDir));
+      while (Directory.Exists (defaultBackupDir));
       Directory.CreateDirectory (defaultBackupDir);
       sGitStatusFilePath = Path.Combine (defaultBackupDir, backupFolderName + ".txt");
       File.WriteAllText (sGitStatusFilePath, ""); // Creating file with empty content.
