@@ -93,7 +93,7 @@ class Program {
          }
 
          File.WriteAllText (sGitStatusFilePath, sb.ToString ());
-         Console.WriteLine (sb.ToString ());
+         //Console.WriteLine (sb.ToString ());
 
          #endregion
 
@@ -103,7 +103,7 @@ class Program {
             if (item.State != FileStatus.Unaltered) { // git ignored files are not considered by default. // item.State != FileStatus.Ignored
                // checks for files in the parent folder/subfolders.
                var filePath = item.FilePath.NormalizePathSeparators ();
-               Console.WriteLine ($"{item.State} - {filePath}");
+               //Console.WriteLine ($"{item.State} - {filePath}");
                if (!filePath.StartsWith (backupRelativeDir, StringComparison.OrdinalIgnoreCase)) {
                   if (sSkipUntracked && item.State.HasFlag (FileStatus.NewInWorkdir)) continue; // Skips untracked files if required
                   string srcPath = Path.Combine (sRepositoryDir, item.FilePath);
@@ -113,7 +113,7 @@ class Program {
                   var dirName = Path.GetDirectoryName (destFilePath) ?? ""; // gets directory of file. if directory, returns same directory's name
                   if (!string.IsNullOrEmpty (dirName)) Directory.CreateDirectory (dirName);
                   if (isDir) { // only for gitignored (folder level)
-                     Console.WriteLine ($"+ Copied {item.State} directory: {item.FilePath}");
+                     Console.WriteLine ($"+ Copied directory: {item.FilePath}");
                      foreach(var f in Directory.GetFiles(srcPath)) {
                         var fileName = Path.GetFileName (f);
                         var dest = Path.Combine (destFilePath, fileName);
@@ -122,7 +122,7 @@ class Program {
                      }
                   } else {
                      File.Copy (srcPath, destFilePath, true);
-                     Console.WriteLine ($"+ Copied {item.State} file: {item.FilePath}");
+                     Console.WriteLine ($"+ Copied file: {item.FilePath}");
                   }
                }
             }
