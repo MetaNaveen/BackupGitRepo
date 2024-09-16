@@ -13,7 +13,7 @@ class Program {
          var appName = Assembly.GetExecutingAssembly ().GetName ().Name;
          if (string.IsNullOrEmpty (appName)) appName = "BackupGitRepo";
          appName += ".exe";
-         Console.WriteLine ($"{appName} <RepoDirectoryPath> [<BackupDirectoryPath>]");
+         Console.WriteLine ($"{appName} [-su | -ii] <RepoDirectoryPath> [<BackupDirectoryPath>]");
          Environment.Exit (-1);
       }
 

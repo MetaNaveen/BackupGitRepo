@@ -4,7 +4,7 @@ Tool to help developers who use git. This tool takes backup of all files that ar
 
 **SUPPORTING COMMANDS:**
 
-    BackupGitRepo [<OPTIONS>] <REPODIR> [<BACKUPDIR>]
+    BackupGitRepo.exe [<OPTIONS>] <REPODIR> [<BACKUPDIR>]
 
     <OPTIONS>:
     -su = skips untracked files
