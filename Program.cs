@@ -6,7 +6,8 @@ namespace BackupGitRepo;
 
 class Program {
    static string sRepositoryDir = "", sBackupDir = "", sGitStatusFilePath = "";
-   static bool sSkipUntracked = false, sSkipStaged = false, sSkipAdded = false, sSkipDeleted = false, sSkipModified = false;
+   static bool sSkipUntracked = false, sIncludeGitIgnored = false;
+   //static bool sSkipStaged = false, sSkipAdded = false, sSkipDeleted = false, sSkipModified = false;
 
    static void Main (string[] args) {
       if (args.Length == 0) {
@@ -17,16 +18,13 @@ class Program {
          Environment.Exit (-1);
       }
 
-      // -su - skipUntracked
+      /*
       // -ss - skipStaged
       // -sa - skipAdded
       // -sd - skipDeleted
       // -sm - skipModified
       // BackupGitRepo -su -ss -sd <> <>
-      if(args[0].StartsWith("-su", StringComparison.OrdinalIgnoreCase)) {
-         args = args.Skip (1).ToArray ();
-         sSkipUntracked = true;
-      }
+
       if (args[0].StartsWith ("-ss", StringComparison.OrdinalIgnoreCase)) {
          args = args.Skip (1).ToArray ();
          sSkipStaged = true;
@@ -42,6 +40,19 @@ class Program {
       if (args[0].StartsWith ("-sm", StringComparison.OrdinalIgnoreCase)) {
          args = args.Skip (1).ToArray ();
          sSkipModified = true;
+      }
+      */
+
+      // -su - skipUntracked
+      // -ii - Include GitIgnored
+      if (args[0].StartsWith("-su", StringComparison.OrdinalIgnoreCase)) {
+         args = args.Skip (1).ToArray ();
+         sSkipUntracked = true;
+      }
+
+      if (args[0].StartsWith ("-ii", StringComparison.OrdinalIgnoreCase)) {
+         args = args.Skip (1).ToArray ();
+         sIncludeGitIgnored = true;
       }
 
       sRepositoryDir = Path.GetFullPath (GetCurrentDirectoryOrArgument (args, 0));
@@ -78,35 +89,31 @@ class Program {
          using var repo = new Repository (sRepositoryDir); // Gets repo from the path to .git
 
          #region RepoChangeLog
-         var sbStaged = new StringBuilder ();
-         var sbUnstaged = new StringBuilder ();
+         var sbModified = new StringBuilder ();
          var sbUntracked = new StringBuilder ();
-         var sbConflicted = new StringBuilder ();
 
          // Retrieves git status without including .gitignored files
-         var files = repo.RetrieveStatus (new StatusOptions { IncludeIgnored = false, IncludeUntracked = true });
+         var files = repo.RetrieveStatus (new StatusOptions { IncludeIgnored = sIncludeGitIgnored, IncludeUntracked = true });
 
          foreach (var file in files) {
             var state = file.State;
 
-            var isStaged = state.HasFlag (FileStatus.NewInIndex) || state.HasFlag (FileStatus.ModifiedInIndex) || state.HasFlag (FileStatus.RenamedInIndex) || state.HasFlag (FileStatus.DeletedFromIndex) || state.HasFlag (FileStatus.TypeChangeInIndex);
-            var isUnstaged = state.HasFlag (FileStatus.ModifiedInWorkdir) || state.HasFlag (FileStatus.RenamedInWorkdir) || state.HasFlag (FileStatus.DeletedFromWorkdir) || state.HasFlag (FileStatus.TypeChangeInWorkdir);
+            //var isStaged = state.HasFlag (FileStatus.NewInIndex) || state.HasFlag (FileStatus.ModifiedInIndex) || state.HasFlag (FileStatus.RenamedInIndex) || state.HasFlag (FileStatus.DeletedFromIndex) || state.HasFlag (FileStatus.TypeChangeInIndex);
+            //var isUnstaged = state.HasFlag (FileStatus.ModifiedInWorkdir) || state.HasFlag (FileStatus.RenamedInWorkdir) || state.HasFlag (FileStatus.DeletedFromWorkdir) || state.HasFlag (FileStatus.TypeChangeInWorkdir);
+            //var isConflicted = state.HasFlag (FileStatus.Conflicted);
             var isUntracked = state.HasFlag (FileStatus.NewInWorkdir);
-            var isConflicted = state.HasFlag (FileStatus.Conflicted);
 
             var s = GetFileStatusName (state); // Gets status name - New/Modified/Deleted/Renamed/TypeChanged
 
-            if (isStaged || isUnstaged) {
-               sbStaged.AppendLine ($"{s} - '{file.FilePath}'");
+            if (!file.FilePath.StartsWith (backupRelativeDir, StringComparison.OrdinalIgnoreCase)) {
+               if (isUntracked) {
+                  sbUntracked.AppendLine ($"'{file.FilePath}'");
+               } else sbModified.AppendLine ($"'{file.FilePath}'");
             }
+
             //if (isUnstaged) {
             //   sbUnstaged.AppendLine ($"{s} - '{file.FilePath}'");
             //}
-            if (isUntracked) {
-               if (!file.FilePath.StartsWith (backupRelativeDir, StringComparison.OrdinalIgnoreCase)) {
-                  sbUntracked.AppendLine ($"{s} - '{file.FilePath}'");
-               }
-            }
             //if (isConflicted) {
             //   sbConflicted.AppendLine ($"{s} - '{file.FilePath}'");
             //}
@@ -114,9 +121,9 @@ class Program {
 
          var sb = new StringBuilder ();
          sb.AppendLine ($"BRANCH: {repo.Head.FriendlyName}\n");
-         if (sbStaged.Length > 0) {
+         if (sbModified.Length > 0) {
             sb.AppendLine ("CHANGES IN TRACKED FILES: ********************************************************");
-            sb.AppendLine (sbStaged.ToString () + "\n");
+            sb.AppendLine (sbModified.ToString () + "\n");
          }
          //if (sbUnstaged.Length > 0) {
          //   sb.AppendLine ("UNSTAGED: ********************************************************");
@@ -219,13 +226,24 @@ class Program {
                Console.WriteLine ($"{item.State} - {filePath}");
                if (!filePath.StartsWith (backupRelativeDir, StringComparison.OrdinalIgnoreCase)) {
                   if (sSkipUntracked && item.State.HasFlag (FileStatus.NewInWorkdir)) continue; // Skips untracked files if required
-                  string srcFile = Path.Combine (sRepositoryDir, item.FilePath);
-                  if (!File.Exists (srcFile)) continue; // checks if the file is not deleted
+                  string srcPath = Path.Combine (sRepositoryDir, item.FilePath);
+                  var isDir = Directory.Exists (srcPath);
+                  if (!File.Exists (srcPath) && !isDir) continue; // checks if the file is not deleted
                   string destFilePath = Path.Combine (sBackupDir, item.FilePath);
-                  var dirName = Path.GetDirectoryName (destFilePath) ?? "";
+                  var dirName = Path.GetDirectoryName (destFilePath) ?? ""; // gets directory of file. if directory, returns same directory's name
                   if (!string.IsNullOrEmpty (dirName)) Directory.CreateDirectory (dirName);
-                  File.Copy (srcFile, destFilePath, true);
-                  Console.WriteLine ($"+ Copied {item.State} file: {item.FilePath}");
+                  if (isDir) { // only for gitignored (folder level)
+                     Console.WriteLine ($"+ Copied {item.State} directory: {item.FilePath}");
+                     foreach(var f in Directory.GetFiles(srcPath)) {
+                        var fileName = Path.GetFileName (f);
+                        var dest = Path.Combine (destFilePath, fileName);
+                        var src = Path.Combine (srcPath, fileName);
+                        File.Copy (src, dest, true);
+                     }
+                  } else {
+                     File.Copy (srcPath, destFilePath, true);
+                     Console.WriteLine ($"+ Copied {item.State} file: {item.FilePath}");
+                  }
                }
             }
          }
