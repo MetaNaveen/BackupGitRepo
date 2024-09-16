@@ -25,4 +25,30 @@ public static class PathExtensions {
    public static string NormalizePathSeparators (this string path) {
       return path.Replace ('/', Path.DirectorySeparatorChar).Replace ('\\', Path.DirectorySeparatorChar);
    }
+
+   // Gets ParentDirName or DrivePath without :\
+   public static string GetParentOrDrivePath (this string path) {
+      var cleanPath = path.Trim (Path.DirectorySeparatorChar);
+      // Normalize the path and check if it's a valid drive letter
+      if (cleanPath.Length == 2 && cleanPath[1] == ':') {
+         return cleanPath[..^1]; // Return drive letter path without trailing backslash
+      }
+      // Check if the path exists
+      if (!Directory.Exists (cleanPath) && !File.Exists (cleanPath)) {
+         return "Path does not exist.";
+      }
+      // Get the directory info
+      DirectoryInfo dirInfo = new DirectoryInfo (cleanPath);
+      // If it's a file, get its directory
+      if (dirInfo.Exists == false) {
+         dirInfo = new FileInfo (cleanPath).Directory!;
+      }
+      // Get parent directory
+      DirectoryInfo parentDir = dirInfo.Parent!;
+      // Return drive letter path if no parent directory (root directory case)
+      if (parentDir == null) {
+         return dirInfo.FullName; // This will be the root directory or drive letter path
+      }
+      return parentDir.Name;
+   }
 }

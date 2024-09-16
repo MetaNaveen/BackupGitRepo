@@ -36,7 +36,10 @@ class Program {
          Environment.Exit (-1);
       }
 
-      sBackupDir = Path.GetFullPath (GetBackupDirectoryOrDefault (args, 1));
+      var repoName = Path.GetFileName (sRepositoryDir);
+      if (string.IsNullOrEmpty (repoName)) repoName = sRepositoryDir.GetParentOrDrivePath ();
+
+      sBackupDir = Path.GetFullPath (GetBackupDirectoryOrDefault (args, 1, repoName));
       var ext = Path.GetExtension (sBackupDir);
       // Validates backup dir
       if (!sBackupDir.IsValidDirectoryPath () || !string.IsNullOrEmpty (ext)) {
@@ -145,15 +148,15 @@ class Program {
       return args.Length > index ? args[index] : Directory.GetCurrentDirectory ();
    }
 
-   static string GetBackupDirectoryOrDefault (string[] args, int index) {
-      string dateSuffix = DateTime.Now.ToString ("ddMMMyyyy");
+   static string GetBackupDirectoryOrDefault (string[] args, int index, string repoName) {
+      string dateSuffix = DateTime.Now.ToString ("yyyyMMMdd");
       string defaultBackupDir = "";
       var isBackupDirArg = args.Length > index;
       string backupDir = isBackupDirArg ? Path.GetFullPath (args[index]) : sRepositoryDir;
       string backupFolderName = "";
       int i = 1;
       do {
-         backupFolderName = $"Backup_{dateSuffix}_{i++}";
+         backupFolderName = $"Backup_{repoName}_{dateSuffix}_{i++}";
          defaultBackupDir = Path.Combine (backupDir, backupFolderName);
       }
       while (Directory.Exists (defaultBackupDir));
