@@ -46,7 +46,9 @@ class Program {
       var repoName = Path.GetFileName (sRepositoryDir);
       if (string.IsNullOrEmpty (repoName)) repoName = sRepositoryDir.GetParentOrDrivePath ();
 
-      sBackupDir = Path.GetFullPath (GetBackupDirectoryOrDefault (args, 1, repoName));
+      using var repo = new Repository (sRepositoryDir); // Gets repo from the path to .git
+
+      sBackupDir = Path.GetFullPath (GetBackupDirectoryOrDefault (args, 1, repoName, repo.Head.FriendlyName));
       var ext = Path.GetExtension (sBackupDir);
       // Validates backup dir
       if (!sBackupDir.IsValidDirectoryPath () || !string.IsNullOrEmpty (ext)) {
@@ -70,8 +72,6 @@ class Program {
       // Processing Repo to log changes and to take backup
       bool isBackupSuccess = false;
       try {
-         using var repo = new Repository (sRepositoryDir); // Gets repo from the path to .git
-
          #region RepoChangeLog
          var sbModified = new StringBuilder ();
          var sbUntracked = new StringBuilder ();
@@ -155,15 +155,15 @@ class Program {
       return args.Length > index ? args[index] : Directory.GetCurrentDirectory ();
    }
 
-   static string GetBackupDirectoryOrDefault (string[] args, int index, string repoName) {
-      string dateSuffix = DateTime.Now.ToString ("yyyyMMMdd");
+   static string GetBackupDirectoryOrDefault (string[] args, int index, string repoName, string branchName) {
+      string dateSuffix = DateTime.Now.ToString ("yyyyMMdd");
       string defaultBackupDir = "";
       var isBackupDirArg = args.Length > index;
       string backupDir = isBackupDirArg ? Path.GetFullPath (args[index]) : sRepositoryDir;
       string backupFolderName = "";
       int i = 1;
       do {
-         backupFolderName = $"Backup_{repoName}_{dateSuffix}_{i++}";
+         backupFolderName = $"Backup_{repoName}_{branchName}_{dateSuffix}_{i++}";
          defaultBackupDir = Path.Combine (backupDir, backupFolderName);
       }
       while (Directory.Exists (defaultBackupDir));
