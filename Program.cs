@@ -9,6 +9,13 @@ class Program {
    static bool sSkipUntracked = false, sIncludeGitIgnored = false;
 
    static void Main (string[] args) {
+      try {
+         var isUpdated = Task.Run (async () => await SelfUpdater.Run ()).GetAwaiter ().GetResult ();
+         if (!isUpdated) throw new Exception ("Unknown reason.");
+      } catch (Exception ex) {
+         Console.WriteLine ($"Self update failed! with error '{ex.Message}'.\n Running with the current version...");
+      }
+
       if (args.Length == 0) {
          var appName = Assembly.GetExecutingAssembly ().GetName ().Name;
          if (string.IsNullOrEmpty (appName)) appName = "BackupGitRepo";
@@ -91,7 +98,7 @@ class Program {
             sb.AppendLine (sbModified.ToString () + "\n");
          }
          if (sbUntracked.Length > 0) {
-            sb.AppendLine ("UNTRACKED: ********************************************************");
+            sb.AppendLine ("UNTRACKED NEW FILES/FOLDERS: ********************************************************");
             sb.AppendLine (sbUntracked.ToString () + "\n");
          }
 

@@ -9,7 +9,7 @@
       <PublishSingleFile>true</PublishSingleFile>
       <!--<PublishTrimmed>true</PublishTrimmed> --><!-- Optional, for reducing size -->
       <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract> <!-- Optional, for including native libraries -->
-      <Version>2.0</Version>
+      <Version>3.0</Version>
    </PropertyGroup>
 
    <ItemGroup>
