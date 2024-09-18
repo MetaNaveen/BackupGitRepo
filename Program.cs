@@ -14,13 +14,13 @@ class Program {
          var isUpdated = Task.Run (async () => await SelfUpdater.Run ("MetaNaveen", "BackupGitRepo", "BackupGitRepo.exe")).GetAwaiter ().GetResult ();
          if (!isUpdated) throw new Exception ("Unknown reason.");
       } catch (Exception ex) {
-         Console.WriteLine ($"Self update failed! with error '{ex.Message}'.\n Running with the current version...");
+         Console.WriteLine ($"Self update failed! with error '{ex.Message}'.\nRunning with the current version...");
       }
 
       var appInfo = AssemblyUtils.GetAssemblyVersion ();
       if (string.IsNullOrEmpty (appInfo.Name)) appInfo.Name = "BackupGitRepo";
       appInfo.Name += ".exe";
-      Console.WriteLine ($"App Version: {appInfo.Major}.{appInfo.Minor}");
+      Console.WriteLine ($"App Version: {appInfo.Major}.{appInfo.Minor}\n");
 
       if (args.Length == 0) {   
          Console.WriteLine ($"USAGE: {appInfo.Name} [-su | -ii] <RepoDirectoryPath> [<BackupDirectoryPath>]");
