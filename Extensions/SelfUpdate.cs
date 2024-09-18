@@ -5,10 +5,9 @@ using System.Text.Json;
 public class SelfUpdater {
    #region Public
 
-   public static async Task<bool> Run (string owner, string repo) {
-      var (serverVersion, downloadUrl) = await GetLatestReleaseAsync (owner, repo);
-      if (serverVersion == null || downloadUrl == null) {
-         //Console.WriteLine ("Failed to retrieve the latest release information.");
+   public static async Task<bool> Run (string owner, string repo, string assetName) {
+      var (serverVersion, downloadUrl) = await GetLatestReleaseAsync (owner, repo, assetName);
+      if (string.IsNullOrEmpty(serverVersion) || string.IsNullOrEmpty (downloadUrl)) {
          return false;
       }
 
@@ -86,7 +85,7 @@ public class SelfUpdater {
 
    private static readonly HttpClient httpClient = new HttpClient ();
 
-   static async Task<(string TagName, string DownloadUrl)> GetLatestReleaseAsync (string owner, string repo) {
+   static async Task<(string TagName, string DownloadUrl)> GetLatestReleaseAsync (string owner, string repo, string assetName) {
       var url = $"https://api.github.com/repos/{owner}/{repo}/releases/latest";
       httpClient.DefaultRequestHeaders.Add ("User-Agent", "BackupGitRepo");
 
@@ -98,8 +97,14 @@ public class SelfUpdater {
          var tagName = root.GetProperty ("tag_name").GetString ();
          var assets = root.GetProperty ("assets");
 
-         if (assets.GetArrayLength () > 0) {
-            var downloadUrl = assets[0].GetProperty ("browser_download_url").GetString ();
+         var assetsCount = assets.GetArrayLength ();
+         if (assetsCount > 0) {
+            var i = 0;
+            string downloadUrl = "";
+            do {
+               downloadUrl = assets[i++].GetProperty ("browser_download_url").GetString () ?? "";
+            } while (i < assetsCount && !downloadUrl.EndsWith (assetName));
+            
             return (tagName, downloadUrl);
          }
 

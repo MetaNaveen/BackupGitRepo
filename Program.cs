@@ -10,7 +10,7 @@ class Program {
 
    static void Main (string[] args) {
       try {
-         var isUpdated = Task.Run (async () => await SelfUpdater.Run ("MetaNaveen", "BackupGitRepo")).GetAwaiter ().GetResult ();
+         var isUpdated = Task.Run (async () => await SelfUpdater.Run ("MetaNaveen", "BackupGitRepo", "BackupGitRepo.exe")).GetAwaiter ().GetResult ();
          if (!isUpdated) throw new Exception ("Unknown reason.");
       } catch (Exception ex) {
          Console.WriteLine ($"Self update failed! with error '{ex.Message}'.\n Running with the current version...");
