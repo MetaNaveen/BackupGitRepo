@@ -1,34 +1,35 @@
-﻿using BackupGitRepo;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using System.Reflection;
 using System.Text.Json;
 
 public class SelfUpdater {
    #region Public
 
-   public static async Task<bool> Run () {
-      string owner = "MetaNaveen";
-      string repo = "BackupGitRepo";
-      var (latestVersion, downloadUrl) = await GetLatestReleaseAsync (owner, repo);
-      if (latestVersion == null || downloadUrl == null) {
+   public static async Task<bool> Run (string owner, string repo) {
+      var (serverVersion, downloadUrl) = await GetLatestReleaseAsync (owner, repo);
+      if (serverVersion == null || downloadUrl == null) {
          //Console.WriteLine ("Failed to retrieve the latest release information.");
          return false;
       }
-      var currentVersion = GetCurrentVersion ();
-      //Console.WriteLine ($"Current Version: {currentVersion}");
-      //Console.WriteLine ($"Latest Version: {latestVersion}");
-      if (IsNewerVersion (currentVersion, latestVersion)) {
-         Console.WriteLine ("A new version is available. Downloading...");
+
+      serverVersion = serverVersion.Trim (['v', 'V']);
+      var serverVersionComponents = serverVersion.Split ('.', StringSplitOptions.RemoveEmptyEntries);
+      _ = int.TryParse (serverVersionComponents[0], out int serverMajor);
+      _ = int.TryParse (serverVersionComponents.Length == 2 ? serverVersionComponents[1] : "0", out int serverMinor);
+
+      var localVersion = GetAssemblyVersion ();
+
+      if (serverMajor > localVersion!.Major || (serverMajor == localVersion.Major && serverMinor > localVersion.Minor)) {
+         Console.WriteLine ($"A newer version {serverMajor}.{serverMinor} is available. Downloading...");
          await UpdateApplicationAsync (downloadUrl);
       }
       return true;
 
-      string GetCurrentVersion () {
-         var version = FileVersionInfo.GetVersionInfo (typeof (Program).Assembly.Location).ProductVersion;
-         return version;
-      }
-
-      bool IsNewerVersion (string currentVersion, string latestVersion) {
-         return string.Compare (currentVersion, latestVersion, StringComparison.OrdinalIgnoreCase) < 0;
+      static (string Name, int Major, int Minor, int Revision) GetAssemblyVersion () {
+         Assembly? currentAssembly = Assembly.GetEntryAssembly ();//Assembly.GetExecutingAssembly ();
+         AssemblyName assemblyName = currentAssembly!.GetName ();
+         Version? currentVersion = assemblyName.Version;
+         return (assemblyName.Name!, currentVersion!.Major, currentVersion.Minor, currentVersion.Revision);
       }
 
       async Task UpdateApplicationAsync (string downloadUrl) {
@@ -70,7 +71,7 @@ public class SelfUpdater {
          });
       }
 
-      string GetTempFile (string suffix = "") {
+      static string GetTempFile (string suffix = "") {
          var tempFilePath = Path.GetTempFileName ();
          var tempDir = Path.GetDirectoryName (tempFilePath);
          var newTempName = Path.Combine (tempDir, Path.GetFileNameWithoutExtension (tempFilePath) + $"_{suffix}");

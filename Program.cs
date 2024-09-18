@@ -10,7 +10,7 @@ class Program {
 
    static void Main (string[] args) {
       try {
-         var isUpdated = Task.Run (async () => await SelfUpdater.Run ()).GetAwaiter ().GetResult ();
+         var isUpdated = Task.Run (async () => await SelfUpdater.Run ("MetaNaveen", "BackupGitRepo")).GetAwaiter ().GetResult ();
          if (!isUpdated) throw new Exception ("Unknown reason.");
       } catch (Exception ex) {
          Console.WriteLine ($"Self update failed! with error '{ex.Message}'.\n Running with the current version...");
@@ -26,7 +26,7 @@ class Program {
 
       // -su - skipUntracked
       // -ii - Include GitIgnored
-      if (args[0].StartsWith("-su", StringComparison.OrdinalIgnoreCase)) {
+      if (args[0].StartsWith ("-su", StringComparison.OrdinalIgnoreCase)) {
          args = args.Skip (1).ToArray ();
          sSkipUntracked = true;
       }
@@ -38,7 +38,7 @@ class Program {
 
       sRepositoryDir = Path.GetFullPath (GetCurrentDirectoryOrArgument (args, 0));
       // Validates repo dir
-      if (!Directory.Exists (Path.Combine(sRepositoryDir, ".git"))) {
+      if (!Directory.Exists (Path.Combine (sRepositoryDir, ".git"))) {
          Console.WriteLine ($"Could not find .git directory at given path. '{sRepositoryDir}'");
          Environment.Exit (-1);
       }
@@ -124,7 +124,7 @@ class Program {
                   if (!string.IsNullOrEmpty (dirName)) Directory.CreateDirectory (dirName);
                   if (isDir) { // only for gitignored (folder level)
                      Console.WriteLine ($"+ Copied directory: {item.FilePath}");
-                     foreach(var f in Directory.GetFiles(srcPath)) {
+                     foreach (var f in Directory.GetFiles (srcPath)) {
                         var fileName = Path.GetFileName (f);
                         var dest = Path.Combine (destFilePath, fileName);
                         var src = Path.Combine (srcPath, fileName);
