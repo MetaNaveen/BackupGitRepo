@@ -1,6 +1,7 @@
-﻿using LibGit2Sharp;
-using System.Reflection;
+﻿using BackupGitRepo.Extensions;
+using LibGit2Sharp;
 using System.Text;
+using Utils;
 
 namespace BackupGitRepo;
 
@@ -16,11 +17,13 @@ class Program {
          Console.WriteLine ($"Self update failed! with error '{ex.Message}'.\n Running with the current version...");
       }
 
-      if (args.Length == 0) {
-         var appName = Assembly.GetExecutingAssembly ().GetName ().Name;
-         if (string.IsNullOrEmpty (appName)) appName = "BackupGitRepo";
-         appName += ".exe";
-         Console.WriteLine ($"{appName} [-su | -ii] <RepoDirectoryPath> [<BackupDirectoryPath>]");
+      var appInfo = AssemblyUtils.GetAssemblyVersion ();
+      if (string.IsNullOrEmpty (appInfo.Name)) appInfo.Name = "BackupGitRepo";
+      appInfo.Name += ".exe";
+      Console.WriteLine ($"App Version: {appInfo.Major}.{appInfo.Minor}");
+
+      if (args.Length == 0) {   
+         Console.WriteLine ($"USAGE: {appInfo.Name} [-su | -ii] <RepoDirectoryPath> [<BackupDirectoryPath>]");
          Environment.Exit (-1);
       }
 
@@ -49,9 +52,8 @@ class Program {
       using var repo = new Repository (sRepositoryDir); // Gets repo from the path to .git
 
       sBackupDir = Path.GetFullPath (GetBackupDirectoryOrDefault (args, 1, repoName, repo.Head.FriendlyName));
-      var ext = Path.GetExtension (sBackupDir);
       // Validates backup dir
-      if (!sBackupDir.IsValidDirectoryPath () || !string.IsNullOrEmpty (ext)) {
+      if (!sBackupDir.IsValidDirectoryPath ()) {
          Console.WriteLine ($"Not a valid directory. '{sBackupDir}'");
          Environment.Exit (-1);
       }

@@ -1,6 +1,7 @@
-﻿namespace BackupGitRepo;
+﻿namespace BackupGitRepo.Extensions;
 
 public static class StringExtensions {
+   // Gets common path between 2 given paths.
    public static string GetCommonPath (this string path1, string path2) {
       var commonPath = "";
       if (string.IsNullOrWhiteSpace (path1) || string.IsNullOrWhiteSpace (path2))
