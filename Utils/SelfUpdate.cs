@@ -53,10 +53,10 @@ public class SelfUpdater {
 
          var batchContent = $@"
             @echo off
-            timeout /t 3 /nobreak > NUL
+            timeout /t 2 /nobreak > NUL
             del ""{currentExePath}""
             move /Y ""{updatedExePath}"" ""{currentExePath}""
-            timeout /t 3 /nobreak > NUL
+            timeout /t 2 /nobreak > NUL
             REM del ""{updatedExePath}""
             REM start ""{Path.GetFileName (currentExePath)}""
             ";
